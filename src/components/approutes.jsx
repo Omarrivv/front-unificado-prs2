@@ -19,6 +19,15 @@ import EditAppoinments from "./appoinments/EditAppoinments";
 import ScheduleList from "./doctorschedule/ScheduleList";
 import AddSchedule from "./doctorschedule/AddSchedule";
 import EditSchedule from "./doctorschedule/EditSchedule";
+//Students
+import StudentList from "./students/StudentList";
+import AddStudent from "./students/AddStudent";
+import EditStudent from "./students/EditStudent";
+import StudentProfile from "./students/StudentProfile";
+//Enrollments
+import EnrollmentList from "./enrollments/EnrollmentList";
+import AddEnrollment from "./enrollments/AddEnrollment";
+import EditEnrollment from "./enrollments/EditEnrollment";
 //Departments
 import DepartmentList from "./department/DepartmentList";
 import AddDepartment from "./department/AddDepartment";
@@ -90,6 +99,7 @@ import Edit_Payment from "./accounts/Edit_Payment";
 import Payslip from "./Payroll/Payslip";
 import Setting from "./settings/Setting";
 import Profile from "./Profile";
+
 const AppRoutes = [
   <Route key="server-error" path="/server-error" element={<ServerError />} />,
   <Route key="blankpage" path="/blankpage" element={<BlankPage />} />,
@@ -173,7 +183,16 @@ const AppRoutes = [
   <Route key="data-table" path="/data-table" element={<DataTable />} />,
   <Route key="admin-dashboard" path="/admin-dashboard" element={<Admin_Dashboard />} />,
   <Route key="doctor-dashboard" path="/doctor-dashboard" element={<Doctor_Dashboard />} />,
-  <Route key="patient-dashboard" path="/patient-dashboard" element={<Patient_Dashboard />} />
+  <Route key="patient-dashboard" path="/patient-dashboard" element={<Patient_Dashboard />} />,
+  // Rutas de Estudiantes
+  <Route key="studentlist" path="/studentlist" element={<StudentList />} />,
+  <Route key="add-student" path="/add-student" element={<AddStudent />} />,
+  <Route key="editstudent" path="/editstudent/:id" element={<EditStudent />} />,
+  <Route key="studentprofile" path="/studentprofile/:id" element={<StudentProfile />} />,
+  // Rutas de Matrículas
+  <Route key="enrollmentlist" path="/enrollmentlist" element={<EnrollmentList />} />,
+  <Route key="add-enrollment" path="/add-enrollment" element={<AddEnrollment />} />,
+  <Route key="editenrollment" path="/editenrollment/:id" element={<EditEnrollment />} />
 ];
 
 export default AppRoutes;

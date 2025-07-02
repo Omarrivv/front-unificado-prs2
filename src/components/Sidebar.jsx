@@ -199,60 +199,45 @@ const Sidebar = (props) => {
                     <li>
                       <Link className={props?.activeClassName === 'add-department' ? 'active' : ''} to="/add-department">Add Department</Link>
                     </li>
-                    <li>
-                      <Link className={props?.activeClassName === 'edit-department' ? 'active' : ''} to="/editdepartment">Edit Department</Link>
-                    </li>
                   </ul>
                 </li>
+
+                {/* Estudiantes */}
                 <li className="submenu">
                   <Link to="#" id="menu-item7" onClick={(e) => handleClick(e, "menu-item7", "menu-items7")}>
                     <span className="menu-side">
-                      <img src={sidemenu} alt="" />
+                      <img src={menuicon09} alt="" />
                     </span>{" "}
-                    <span> Accounts </span> <span className="menu-arrow" />
+                    <span> Estudiantes </span> <span className="menu-arrow" />
                   </Link>
                   <ul style={{ display: "none" }} className="menu-items7">
                     <li>
-                      <Link className={props?.activeClassName === 'invoice-list' ? 'active' : ''} to="/invoicelist">Invoices</Link>
+                      <Link className={props?.activeClassName === 'student-list' ? 'active' : ''} to="/studentlist">Lista de Estudiantes</Link>
                     </li>
                     <li>
-                      <Link className={props?.activeClassName === 'payments' ? 'active' : ''} to="/payments">Payments</Link>
-                    </li>
-                    <li>
-                      <Link className={props?.activeClassName === 'expenses' ? 'active' : ''} to="/expenses">Expenses</Link>
-                    </li>
-                    <li>
-                      <Link className={props?.activeClassName === 'taxes' ? 'active' : ''} to="/taxes">Taxes</Link>
-                    </li>
-                    <li>
-                      <Link className={props?.activeClassName === 'provident-fund' ? 'active' : ''} to="/providentfund">Provident Fund</Link>
+                      <Link className={props?.activeClassName === 'add-student' ? 'active' : ''} to="/add-student">Agregar Estudiante</Link>
                     </li>
                   </ul>
                 </li>
+
+                {/* Matrículas */}
                 <li className="submenu">
                   <Link to="#" id="menu-item8" onClick={(e) => handleClick(e, "menu-item8", "menu-items8")}>
                     <span className="menu-side">
-                      <img src={menuicon09} alt="" />
+                      <img src={menuicon10} alt="" />
                     </span>{" "}
-                    <span> Payroll </span> <span className="menu-arrow" />
+                    <span> Matrículas </span> <span className="menu-arrow" />
                   </Link>
                   <ul style={{ display: "none" }} className="menu-items8">
                     <li>
-                      <Link className={props?.activeClassName === 'employee-salary' ? 'active' : ''} to="/employeesalary"> Employee Salary </Link>
+                      <Link className={props?.activeClassName === 'enrollment-list' ? 'active' : ''} to="/enrollmentlist">Lista de Matrículas</Link>
                     </li>
                     <li>
-                      <Link className={props?.activeClassName === 'employee-payslip' ? 'active' : ''} to="/payslip"> Payslip </Link>
+                      <Link className={props?.activeClassName === 'add-enrollment' ? 'active' : ''} to="/add-enrollment">Agregar Matrícula</Link>
                     </li>
                   </ul>
                 </li>
-                <li>
-                  <Link className={props?.activeClassName === 'chat' ? 'active' : ''} to="/chat">
-                    <span className="menu-side">
-                      <img src={menuicon10} alt="" />
-                    </span>{" "}
-                    <span>Chat</span>
-                  </Link>
-                </li>
+
                 <li className="submenu">
                   <Link to="#" id="menu-item9" onClick={(e) => handleClick(e, "menu-item9", "menu-items9")}>
                     <span className="menu-side">
