@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Table, Button, Form, InputGroup, Spinner, Modal, Card, Row, Col } from 'react-bootstrap';
 import { studentService } from '../../services';
-import Header from '../Header';
-import Sidebar from '../Sidebar';
-import Swal from 'sweetalert2';
+import Header from '../../components/Header';
+import Sidebar from '../../components/Sidebar';
+import CustomAlert from '../common/CustomAlert';
 import './StudentList.css';
 
 const StudentList = () => {
@@ -21,6 +21,13 @@ const StudentList = () => {
   });
   const [showDetails, setShowDetails] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
+  const [alert, setAlert] = useState({
+    show: false,
+    title: '',
+    message: '',
+    type: 'info',
+    onConfirm: null
+  });
 
   const loadStudents = async () => {
     try {
@@ -40,54 +47,55 @@ const StudentList = () => {
     loadStudents();
   }, []);
 
+  const showAlert = (config) => {
+    setAlert({ ...config, show: true });
+  };
+
+  const hideAlert = () => {
+    setAlert(prev => ({ ...prev, show: false }));
+  };
+
   const handleDelete = async (id) => {
     try {
       setProcessingAction(true);
-      const result = await Swal.fire({
+      showAlert({
         title: '¿Está seguro?',
-        text: 'Esta acción desactivará el estudiante temporalmente',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6',
-        confirmButtonText: 'Sí, desactivar',
-        cancelButtonText: 'Cancelar',
-        showLoaderOnConfirm: true,
-        preConfirm: async () => {
+        message: 'Esta acción desactivará el estudiante temporalmente',
+        type: 'warning',
+        onConfirm: async () => {
           try {
             await studentService.deleteStudent(id);
-            return true;
-          } catch (error) {
-            Swal.showValidationMessage(
-              `Error al desactivar: ${error.message || 'Ha ocurrido un error'}`
+            setStudents(prevStudents => 
+              prevStudents.map(student => 
+                student.id === id 
+                  ? { ...student, status: 'I' }
+                  : student
+              )
             );
+            showAlert({
+              title: 'Desactivado',
+              message: 'El estudiante ha sido desactivado correctamente',
+              type: 'success',
+              showCancel: false,
+              autoClose: true
+            });
+          } catch (error) {
+            showAlert({
+              title: 'Error',
+              message: error.message || 'No se pudo desactivar el estudiante',
+              type: 'error',
+              showCancel: false
+            });
           }
-        },
-        allowOutsideClick: () => !Swal.isLoading()
+        }
       });
-
-      if (result.isConfirmed) {
-        setStudents(prevStudents => 
-          prevStudents.map(student => 
-            student.id === id 
-              ? { ...student, status: 'I' }
-              : student
-          )
-        );
-
-        await Swal.fire({
-          icon: 'success',
-          title: 'Desactivado',
-          text: 'El estudiante ha sido desactivado correctamente',
-          timer: 1500
-        });
-      }
     } catch (error) {
       console.error('Error al desactivar estudiante:', error);
-      Swal.fire({
-        icon: 'error',
+      showAlert({
         title: 'Error',
-        text: error.message || 'No se pudo desactivar el estudiante'
+        message: error.message || 'No se pudo desactivar el estudiante',
+        type: 'error',
+        showCancel: false
       });
     } finally {
       setProcessingAction(false);
@@ -97,49 +105,42 @@ const StudentList = () => {
   const handleRestore = async (id) => {
     try {
       setProcessingAction(true);
-      const result = await Swal.fire({
+      showAlert({
         title: '¿Está seguro?',
-        text: 'Esta acción restaurará el estudiante',
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonColor: '#28a745',
-        cancelButtonColor: '#3085d6',
-        confirmButtonText: 'Sí, restaurar',
-        cancelButtonText: 'Cancelar',
-        showLoaderOnConfirm: true,
-        preConfirm: async () => {
+        message: 'Esta acción restaurará el estudiante',
+        type: 'warning',
+        onConfirm: async () => {
           try {
             const updatedStudent = await studentService.restoreStudent(id);
-            return updatedStudent;
-          } catch (error) {
-            Swal.showValidationMessage(
-              `Error al restaurar: ${error.message || 'Ha ocurrido un error'}`
+            setStudents(prevStudents => 
+              prevStudents.map(student => 
+                student.id === id ? updatedStudent : student
+              )
             );
+            showAlert({
+              title: 'Restaurado',
+              message: 'El estudiante ha sido restaurado correctamente',
+              type: 'success',
+              showCancel: false,
+              autoClose: true
+            });
+          } catch (error) {
+            showAlert({
+              title: 'Error',
+              message: error.message || 'No se pudo restaurar el estudiante',
+              type: 'error',
+              showCancel: false
+            });
           }
-        },
-        allowOutsideClick: () => !Swal.isLoading()
+        }
       });
-
-      if (result.isConfirmed && result.value) {
-        setStudents(prevStudents => 
-          prevStudents.map(student => 
-            student.id === id ? result.value : student
-          )
-        );
-
-        await Swal.fire({
-          icon: 'success',
-          title: 'Restaurado',
-          text: 'El estudiante ha sido restaurado correctamente',
-          timer: 1500
-        });
-      }
     } catch (error) {
       console.error('Error al restaurar estudiante:', error);
-      Swal.fire({
-        icon: 'error',
+      showAlert({
         title: 'Error',
-        text: error.message || 'No se pudo restaurar el estudiante'
+        message: error.message || 'No se pudo restaurar el estudiante',
+        type: 'error',
+        showCancel: false
       });
     } finally {
       setProcessingAction(false);
@@ -657,6 +658,16 @@ const StudentList = () => {
           </Button>
         </Modal.Footer>
       </Modal>
+      <CustomAlert
+        show={alert.show}
+        onClose={hideAlert}
+        onConfirm={alert.onConfirm}
+        title={alert.title}
+        message={alert.message}
+        type={alert.type}
+        showCancel={alert.showCancel}
+        autoClose={alert.autoClose}
+      />
     </>
   );
 };

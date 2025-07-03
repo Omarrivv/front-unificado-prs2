@@ -4,9 +4,9 @@ import { Table, Button, Form, InputGroup, Spinner, Modal, Card, Row, Col } from 
 import { enrollmentService } from '../../services/enrollmentService';
 import { studentService } from '../../services/studentService';
 import { classroomService } from '../../services/classroomService';
-import Header from '../Header';
-import Sidebar from '../Sidebar';
-import Swal from 'sweetalert2';
+import Header from '../../components/Header';
+import Sidebar from '../../components/Sidebar';
+import CustomAlert from '../common/CustomAlert';
 
 const EnrollmentList = () => {
   const navigate = useNavigate();
@@ -25,6 +25,13 @@ const EnrollmentList = () => {
   });
   const [showDetails, setShowDetails] = useState(false);
   const [selectedEnrollment, setSelectedEnrollment] = useState(null);
+  const [alert, setAlert] = useState({
+    show: false,
+    title: '',
+    message: '',
+    type: 'info',
+    onConfirm: null
+  });
 
   const loadStudentDetails = async (studentId) => {
     if (!studentId || studentDetails[studentId]) return;
@@ -81,55 +88,55 @@ const EnrollmentList = () => {
     loadEnrollments();
   }, []);
 
+  const showAlert = (config) => {
+    setAlert({ ...config, show: true });
+  };
+
+  const hideAlert = () => {
+    setAlert(prev => ({ ...prev, show: false }));
+  };
+
   const handleDelete = async (id) => {
     try {
       setProcessingAction(true);
-      const result = await Swal.fire({
+      showAlert({
         title: '¿Está seguro?',
-        text: 'Esta acción desactivará la matrícula temporalmente',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6',
-        confirmButtonText: 'Sí, desactivar',
-        cancelButtonText: 'Cancelar',
-        showLoaderOnConfirm: true,
-        preConfirm: async () => {
+        message: 'Esta acción desactivará la matrícula temporalmente',
+        type: 'warning',
+        onConfirm: async () => {
           try {
             await enrollmentService.deleteEnrollment(id);
-            return true;
-          } catch (error) {
-            Swal.showValidationMessage(
-              `Error al desactivar: ${error.message || 'Ha ocurrido un error'}`
+            setEnrollments(prevEnrollments => 
+              prevEnrollments.map(enrollment => 
+                enrollment.id === id 
+                  ? { ...enrollment, status: 'I' }
+                  : enrollment
+              )
             );
+            showAlert({
+              title: 'Desactivada',
+              message: 'La matrícula ha sido desactivada correctamente',
+              type: 'success',
+              showCancel: false,
+              autoClose: true
+            });
+          } catch (error) {
+            showAlert({
+              title: 'Error',
+              message: error.message || 'No se pudo desactivar la matrícula',
+              type: 'error',
+              showCancel: false
+            });
           }
-        },
-        allowOutsideClick: () => !Swal.isLoading()
+        }
       });
-
-      if (result.isConfirmed) {
-        // Actualizar el estado local directamente
-        setEnrollments(prevEnrollments => 
-          prevEnrollments.map(enrollment => 
-            enrollment.id === id 
-              ? { ...enrollment, status: 'I' }
-              : enrollment
-          )
-        );
-
-        await Swal.fire({
-          icon: 'success',
-          title: 'Desactivada',
-          text: 'La matrícula ha sido desactivada correctamente',
-          timer: 1500
-        });
-      }
     } catch (error) {
       console.error('Error al desactivar matrícula:', error);
-      Swal.fire({
-        icon: 'error',
+      showAlert({
         title: 'Error',
-        text: error.message || 'No se pudo desactivar la matrícula'
+        message: error.message || 'No se pudo desactivar la matrícula',
+        type: 'error',
+        showCancel: false
       });
     } finally {
       setProcessingAction(false);
@@ -139,50 +146,42 @@ const EnrollmentList = () => {
   const handleRestore = async (id) => {
     try {
       setProcessingAction(true);
-      const result = await Swal.fire({
+      showAlert({
         title: '¿Está seguro?',
-        text: 'Esta acción restaurará la matrícula',
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonColor: '#28a745',
-        cancelButtonColor: '#3085d6',
-        confirmButtonText: 'Sí, restaurar',
-        cancelButtonText: 'Cancelar',
-        showLoaderOnConfirm: true,
-        preConfirm: async () => {
+        message: 'Esta acción restaurará la matrícula',
+        type: 'warning',
+        onConfirm: async () => {
           try {
             const updatedEnrollment = await enrollmentService.restoreEnrollment(id);
-            return updatedEnrollment;
-          } catch (error) {
-            Swal.showValidationMessage(
-              `Error al restaurar: ${error.message || 'Ha ocurrido un error'}`
+            setEnrollments(prevEnrollments => 
+              prevEnrollments.map(enrollment => 
+                enrollment.id === id ? updatedEnrollment : enrollment
+              )
             );
+            showAlert({
+              title: 'Restaurada',
+              message: 'La matrícula ha sido restaurada correctamente',
+              type: 'success',
+              showCancel: false,
+              autoClose: true
+            });
+          } catch (error) {
+            showAlert({
+              title: 'Error',
+              message: error.message || 'No se pudo restaurar la matrícula',
+              type: 'error',
+              showCancel: false
+            });
           }
-        },
-        allowOutsideClick: () => !Swal.isLoading()
+        }
       });
-
-      if (result.isConfirmed && result.value) {
-        // Actualizar el estado local con la respuesta del servidor
-        setEnrollments(prevEnrollments => 
-          prevEnrollments.map(enrollment => 
-            enrollment.id === id ? result.value : enrollment
-          )
-        );
-
-        await Swal.fire({
-          icon: 'success',
-          title: 'Restaurada',
-          text: 'La matrícula ha sido restaurada correctamente',
-          timer: 1500
-        });
-      }
     } catch (error) {
       console.error('Error al restaurar matrícula:', error);
-      Swal.fire({
-        icon: 'error',
+      showAlert({
         title: 'Error',
-        text: error.message || 'No se pudo restaurar la matrícula'
+        message: error.message || 'No se pudo restaurar la matrícula',
+        type: 'error',
+        showCancel: false
       });
     } finally {
       setProcessingAction(false);
@@ -648,6 +647,16 @@ const EnrollmentList = () => {
           </Button>
         </Modal.Footer>
       </Modal>
+      <CustomAlert
+        show={alert.show}
+        onClose={hideAlert}
+        onConfirm={alert.onConfirm}
+        title={alert.title}
+        message={alert.message}
+        type={alert.type}
+        showCancel={alert.showCancel}
+        autoClose={alert.autoClose}
+      />
     </>
   );
 };

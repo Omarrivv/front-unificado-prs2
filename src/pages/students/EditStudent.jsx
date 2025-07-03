@@ -1,38 +1,93 @@
 import React, { useState, useEffect } from 'react';
 import { Form, Input, Select, DatePicker, Button, Card, Spin } from 'antd';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { studentService } from '../../services';
 import institutionService from '../../services/institution.service';
-import Header from '../Header';
-import Sidebar from '../Sidebar';
-import { showConfirmCreate, showConfirmCancel, showSuccess, showError } from '../../utils/alerts';
-import './AddStudent.css';
+import Header from '../../components/Header';
+import Sidebar from '../../components/Sidebar';
+import CustomAlert from '../common/CustomAlert';
+import dayjs from 'dayjs';
 
 const { Option } = Select;
 
-const AddStudent = () => {
+const EditStudent = () => {
   const navigate = useNavigate();
+  const { id } = useParams();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
+  const [initialValues, setInitialValues] = useState(null);
+  const [loadingData, setLoadingData] = useState(true);
   const [documentType, setDocumentType] = useState('DNI');
   const [institutions, setInstitutions] = useState([]);
   const [loadingInstitutions, setLoadingInstitutions] = useState(true);
+  const [alert, setAlert] = useState({
+    show: false,
+    title: '',
+    message: '',
+    type: 'info',
+    onConfirm: null
+  });
 
   useEffect(() => {
+    const loadInstitutions = async () => {
+      try {
+        const data = await institutionService.getAllInstitutions();
+        setInstitutions(data);
+      } catch (error) {
+        console.error('Error al cargar instituciones:', error);
+        showAlert({
+          title: 'Error',
+          message: 'Error al cargar las instituciones',
+          type: 'error',
+          showCancel: false
+        });
+      } finally {
+        setLoadingInstitutions(false);
+      }
+    };
+
     loadInstitutions();
   }, []);
 
-  const loadInstitutions = async () => {
-    try {
-      const data = await institutionService.getAllInstitutions();
-      setInstitutions(data);
-    } catch (error) {
-      console.error('Error al cargar instituciones:', error);
-      showError('Error al cargar las instituciones');
-    } finally {
-      setLoadingInstitutions(false);
-    }
-  };
+  useEffect(() => {
+    const fetchStudent = async () => {
+      try {
+        setLoadingData(true);
+        const data = await studentService.getStudentById(id);
+        if (!data) {
+          showAlert({
+            title: 'Error',
+            message: 'No se encontró el estudiante',
+            type: 'error',
+            showCancel: false
+          });
+          navigate('/studentlist');
+          return;
+        }
+        setDocumentType(data.documentType);
+        setInitialValues({
+          ...data,
+          birthDate: dayjs(data.birthDate)
+        });
+        form.setFieldsValue({
+          ...data,
+          birthDate: dayjs(data.birthDate)
+        });
+      } catch (error) {
+        console.error('Error al cargar el estudiante:', error);
+        showAlert({
+          title: 'Error',
+          message: 'Error al cargar los datos del estudiante',
+          type: 'error',
+          showCancel: false
+        });
+        navigate('/studentlist');
+      } finally {
+        setLoadingData(false);
+      }
+    };
+    fetchStudent();
+  }, [id, form, navigate]);
 
   const validateNames = (_, value) => {
     if (!value) {
@@ -70,71 +125,94 @@ const AddStudent = () => {
     return Promise.resolve();
   };
 
-  const showConfirm = () => {
-    showConfirmCreate('¿Está seguro de crear este estudiante?').then((result) => {
-      if (result.isConfirmed) {
-        form.submit();
-      }
-    });
+  const showAlert = (config) => {
+    setAlert({ ...config, show: true });
   };
 
-  const handleCreate = async (values) => {
+  const hideAlert = () => {
+    setAlert(prev => ({ ...prev, show: false }));
+  };
+
+  const handleUpdate = async (values) => {
     setLoading(true);
     try {
       const studentData = {
         ...values,
         birthDate: values.birthDate.format('YYYY-MM-DD'),
-        status: 'A',
-        nameQr: `${values.firstName}_${values.lastName}_${values.documentNumber}`
+        nameQr: `${values.firstName}_${values.lastName}_${values.documentNumber}`,
+        status: initialValues.status
       };
 
-      await studentService.createStudent(studentData);
-      await showSuccess('Estudiante creado correctamente');
-      navigate('/studentlist');
+      await studentService.updateStudent(id, studentData);
+      showAlert({
+        title: 'Éxito',
+        message: 'Estudiante actualizado correctamente',
+        type: 'success',
+        showCancel: false,
+        autoClose: true,
+        onConfirm: () => navigate('/studentlist')
+      });
     } catch (error) {
-      console.error('Error al crear el estudiante:', error);
-      showError('Error al crear el estudiante');
+      console.error('Error al actualizar:', error);
+      showAlert({
+        title: 'Error',
+        message: error.message || 'Error al actualizar el estudiante',
+        type: 'error',
+        showCancel: false
+      });
     } finally {
       setLoading(false);
     }
   };
 
   const handleCancel = () => {
-    showConfirmCancel().then((result) => {
-      if (result.isConfirmed) {
-        navigate('/studentlist');
-      }
+    showAlert({
+      title: 'Confirmación',
+      message: '¿Está seguro de cancelar la edición?',
+      type: 'warning',
+      showCancel: true,
+      onConfirm: () => navigate('/studentlist'),
+      onCancel: hideAlert
     });
   };
 
-  if (loadingInstitutions) {
+  if (loadingData || loadingInstitutions) {
     return (
-      <div className="loading-container">
-        <Spin size="large" tip="Cargando instituciones..." />
-      </div>
+      <>
+        <Header />
+        <Sidebar activeClassName="edit-student" />
+        <div className="page-wrapper">
+          <div className="content container-fluid">
+            <div style={{ textAlign: 'center', padding: '50px' }}>
+              <Spin size="large" />
+              <p style={{ marginTop: '20px' }}>Cargando datos...</p>
+            </div>
+          </div>
+        </div>
+      </>
     );
   }
 
   return (
     <>
       <Header />
-      <Sidebar activeClassName="student-list" />
+      <Sidebar activeClassName="edit-student" />
       <div className="page-wrapper">
         <div className="content container-fluid">
           <div className="page-header">
-            <div className="row align-items-center">
+            <div className="row">
               <div className="col">
-                <h3 className="page-title">Agregar Estudiante</h3>
+                <h3 className="page-title">Editar Estudiante</h3>
               </div>
             </div>
           </div>
 
-          <Card className="form-card">
+          <Card>
             <Form
               form={form}
               layout="vertical"
-              onFinish={handleCreate}
-              className="student-form"
+              onFinish={handleUpdate}
+              initialValues={initialValues}
             >
               <div className="row">
                 <div className="col-md-12">
@@ -164,7 +242,7 @@ const AddStudent = () => {
                     label="Nombre"
                     rules={[{ validator: validateNames }]}
                   >
-                    <Input placeholder="Ingrese el nombre" />
+                    <Input />
                   </Form.Item>
                 </div>
                 <div className="col-md-6">
@@ -173,7 +251,7 @@ const AddStudent = () => {
                     label="Apellido"
                     rules={[{ validator: validateNames }]}
                   >
-                    <Input placeholder="Ingrese el apellido" />
+                    <Input />
                   </Form.Item>
                 </div>
               </div>
@@ -184,7 +262,6 @@ const AddStudent = () => {
                     name="documentType"
                     label="Tipo de Documento"
                     rules={[{ required: true, message: 'El tipo de documento es requerido' }]}
-                    initialValue="DNI"
                   >
                     <Select onChange={value => setDocumentType(value)}>
                       <Option value="DNI">DNI</Option>
@@ -198,10 +275,7 @@ const AddStudent = () => {
                     label="Número de Documento"
                     rules={[{ validator: validateDocument }]}
                   >
-                    <Input 
-                      maxLength={documentType === 'DNI' ? 8 : 12}
-                      placeholder={documentType === 'DNI' ? 'Ingrese 8 dígitos' : 'Ingrese entre 9 y 12 dígitos'} 
-                    />
+                    <Input maxLength={documentType === 'DNI' ? 8 : 12} />
                   </Form.Item>
                 </div>
               </div>
@@ -213,7 +287,7 @@ const AddStudent = () => {
                     label="Género"
                     rules={[{ required: true, message: 'El género es requerido' }]}
                   >
-                    <Select placeholder="Seleccione el género">
+                    <Select>
                       <Option value="M">Masculino</Option>
                       <Option value="F">Femenino</Option>
                     </Select>
@@ -225,11 +299,7 @@ const AddStudent = () => {
                     label="Fecha de Nacimiento"
                     rules={[{ required: true, message: 'La fecha de nacimiento es requerida' }]}
                   >
-                    <DatePicker 
-                      style={{ width: '100%' }} 
-                      format="YYYY-MM-DD"
-                      placeholder="Seleccione la fecha" 
-                    />
+                    <DatePicker style={{ width: '100%' }} format="YYYY-MM-DD" />
                   </Form.Item>
                 </div>
               </div>
@@ -244,7 +314,7 @@ const AddStudent = () => {
                       { type: 'email', message: 'Ingrese un email válido' }
                     ]}
                   >
-                    <Input placeholder="ejemplo@correo.com" />
+                    <Input />
                   </Form.Item>
                 </div>
                 <div className="col-md-6">
@@ -253,10 +323,7 @@ const AddStudent = () => {
                     label="Teléfono"
                     rules={[{ validator: validatePhone }]}
                   >
-                    <Input 
-                      maxLength={9}
-                      placeholder="Ingrese número que empiece con 9" 
-                    />
+                    <Input maxLength={9} />
                   </Form.Item>
                 </div>
               </div>
@@ -268,14 +335,14 @@ const AddStudent = () => {
                     label="Dirección"
                     rules={[{ required: true, message: 'La dirección es requerida' }]}
                   >
-                    <Input placeholder="Ingrese la dirección completa" />
+                    <Input />
                   </Form.Item>
                 </div>
               </div>
 
               <div className="form-actions">
-                <Button type="primary" onClick={showConfirm} loading={loading}>
-                  Guardar
+                <Button type="primary" onClick={form.submit} loading={loading}>
+                  Guardar Cambios
                 </Button>
                 <Button className="cancel-button" onClick={handleCancel}>
                   Cancelar
@@ -285,8 +352,18 @@ const AddStudent = () => {
           </Card>
         </div>
       </div>
+      <CustomAlert
+        show={alert.show}
+        onClose={hideAlert}
+        onConfirm={alert.onConfirm}
+        title={alert.title}
+        message={alert.message}
+        type={alert.type}
+        showCancel={alert.showCancel}
+        autoClose={alert.autoClose}
+      />
     </>
   );
 };
 
-export default AddStudent; 
+export default EditStudent;

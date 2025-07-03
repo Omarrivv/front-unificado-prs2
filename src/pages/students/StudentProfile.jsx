@@ -3,8 +3,8 @@ import { Card, Row, Col, Button, Tag, Avatar } from 'antd';
 import { useNavigate, useParams } from 'react-router-dom';
 import { studentService } from '../../services';
 import moment from 'moment';
-import Header from '../Header';
-import Sidebar from '../Sidebar';
+import Header from '../../components/Header';
+import Sidebar from '../../components/Sidebar';
 import { 
   UserOutlined, 
   IdcardOutlined, 
@@ -16,7 +16,7 @@ import {
   EditOutlined,
   ArrowLeftOutlined
 } from '@ant-design/icons';
-import '../../styles/StudentProfile.css';
+import './StudentProfile.css';
 
 const StudentProfile = () => {
   const navigate = useNavigate();

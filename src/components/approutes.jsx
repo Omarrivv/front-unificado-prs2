@@ -20,14 +20,14 @@ import ScheduleList from "./doctorschedule/ScheduleList";
 import AddSchedule from "./doctorschedule/AddSchedule";
 import EditSchedule from "./doctorschedule/EditSchedule";
 //Students
-import StudentList from "./students/StudentList";
-import AddStudent from "./students/AddStudent";
-import EditStudent from "./students/EditStudent";
-import StudentProfile from "./students/StudentProfile";
+import StudentList from "../pages/students/StudentList";
+import AddStudent from "../pages/students/AddStudent";
+import EditStudent from "../pages/students/EditStudent";
+import StudentProfile from "../pages/students/StudentProfile";
 //Enrollments
-import EnrollmentList from "./enrollments/EnrollmentList";
-import AddEnrollment from "./enrollments/AddEnrollment";
-import EditEnrollment from "./enrollments/EditEnrollment";
+import EnrollmentList from "../pages/enrollments/EnrollmentList";
+import AddEnrollment from "../pages/enrollments/AddEnrollment";
+import EditEnrollment from "../pages/enrollments/EditEnrollment";
 //Departments
 import DepartmentList from "./department/DepartmentList";
 import AddDepartment from "./department/AddDepartment";
